@@ -6,12 +6,11 @@
 
 <style>
     body {
-        //background-image: url("/image 4.png");
-        //background-size: cover;
-        //background-position: 25px;
+        background-image: url("/image 4.png");
+        background-size: cover;
+        background-position: 25px;
         margin: 0;
         padding: 0;
-	    background-color: black;
     }
 
     :root {
@@ -258,18 +257,27 @@
 
 	<!-- LINKS -->
 	<div class="menu__center">
-		<template v-for="btn in linksList">
-			<vue-menu-button
-				:title="btn.title"
-				:icon-name="btn.icon"
-				:icon-only="elements.small"
-				:link="btn.link"
-				:items="btn.items"
-				:hash="matrix.hash"
-				:favorite-drop="true"
-				:favorite-links="matrix.favorite"
-				@change-favorite="changeFavorite">
-			</vue-menu-button>
+		<template v-for="(btn, i) in links" v-key="i">
+			<div @dragstart="dragStart(i, $event)"
+			     @drop="dragFinish(i, $event)"
+			     draggable="true"
+			     @dragover.prevent>
+				<vue-menu-button
+					@dragstart="dragStart(i, $event)"
+					@drop="dragFinish(i, $event)"
+					draggable="true"
+					@dragover.prevent
+					:title="btn.title"
+					:icon-name="btn.icon"
+					:icon-only="elements.small"
+					:link="btn.link"
+					:items="btn.items"
+					:hash="matrix.hash"
+					:favorite-drop="true"
+					:favorite-links="matrix.favorite"
+					@change-favorite="changeFavorite">
+				</vue-menu-button>
+			</div>
 		</template>
 	</div>
 
@@ -567,8 +575,34 @@
                icon: "user-icon", title: 'Only Link 3', link: 'test23'
             },
          ],
+         dragging: -1,
       },
       methods: {
+         dragStart(which, ev) {
+            console.log(which)
+            ev.dataTransfer.setData('Text', this.id);
+            ev.dataTransfer.dropEffect = 'move'
+            this.dragging = which;
+         },
+         dragEnd() {
+            console.log('wa?')
+            this.dragging = -1
+         },
+         dragFinish(to) {
+            console.log(to)
+            this.moveItem(this.dragging, to);
+         },
+         moveItem(from, to) {
+            if (to === -1) {
+               this.removeItemAt(from);
+            }
+            else {
+               this.links.splice(to, 0, this.links.splice(from, 1)[0]);
+            }
+         },
+         removeItemAt(index) {
+            this.links.splice(index, 1);
+         },
          changeFavorite(item) {
             if (this.matrix.favorite) {
                if (this.matrix.favorite.find(e => e.link === item.link)) {
@@ -586,9 +620,10 @@
          }
       },
       computed: {
-         linksList() {
-            return this.links.filter((item) => item.sort_index = 1)
+         isDragging() {
+            return this.dragging > -1
          }
-      }
+      },
    })
 </script>
+
